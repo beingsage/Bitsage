@@ -1,3 +1,5 @@
+MOSTLY BACKEND IS DONE YET FRONTEND IS TO BE DONE!!
+
 v1.0.0
 Backend -> Mega Engine, Nano Engine, ENGINES
 Frontend -> Web
