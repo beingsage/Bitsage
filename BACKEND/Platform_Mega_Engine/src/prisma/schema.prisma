@@ -1,0 +1,102 @@
+// Prisma schema for MongoDB
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  username      String         @unique
+  email         String         @unique
+  fullName      String
+  avatar        String?
+  coverImage    String?
+  description   String?        @default("")
+  password      String
+  refreshToken  String?
+  watchHistory  WatchHistory[]
+  blogPosts     BlogPost[]     @relation("UserBlogPosts")
+  comments      Comment[]      @relation("UserComments")
+  likes         Like[]         @relation("UserLikes")
+  subscriptions Subscription[] @relation("UserSubscriptions") // Subscriptions by this user
+  subscribers   Subscription[] @relation("UserSubscribers") // Users who subscribed to this user
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+}
+
+model Subscription {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  subscriber     User     @relation(fields: [subscriberId], references: [id], name: "UserSubscriptions")
+  subscriberId   String   @db.ObjectId
+  subscribedTo   User     @relation(fields: [subscribedToId], references: [id], name: "UserSubscribers")
+  subscribedToId String   @db.ObjectId
+  createdAt      DateTime @default(now()) @map("created_at")
+}
+
+model BlogPost {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  video        String?
+  thumbnail    String?
+  title        String
+  description  String
+  isPublished  Boolean       @default(true)
+  duration     Float?
+  views        Int           @default(0)
+  owner        User?         @relation(fields: [ownerId], references: [id], name: "UserBlogPosts")
+  ownerId      String?       @db.ObjectId
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  Comment      Comment[]
+  Like         Like[]
+  blogPostTags BlogPostTag[] // Relation through the BlogPostTag join model
+}
+
+model Tag {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name         String        @unique
+  createdAt    DateTime      @default(now()) @map("created_at")
+  blogPostTags BlogPostTag[] // Relation through the BlogPostTag join model
+}
+
+model BlogPostTag {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id])
+  blogPostId String   @db.ObjectId
+  tag        Tag      @relation(fields: [tagId], references: [id])
+  tagId      String   @db.ObjectId
+}
+
+model Comment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  content    String
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id])
+  blogPostId String   @db.ObjectId
+  owner      User     @relation(fields: [ownerId], references: [id], name: "UserComments")
+  ownerId    String   @db.ObjectId
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  Like       Like[]
+}
+
+model Like {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  blogPost   BlogPost? @relation(fields: [blogPostId], references: [id])
+  blogPostId String?   @db.ObjectId
+  comment    Comment?  @relation(fields: [commentId], references: [id])
+  commentId  String?   @db.ObjectId
+  likedBy    User      @relation(fields: [likedById], references: [id], name: "UserLikes")
+  likedById  String    @db.ObjectId
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+}
+
+
+
+type WatchHistory {
+  video     String   @db.ObjectId
+  watchedAt DateTime @default(now())
+}
